@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<extension key="iskconcustom" type="module">
+  <file>iskconcustom</file>
+  <name>Custom Fixes</name>
+  <description>Extension for custom fixes - e.g making recur button change to recurring option after gocardless is selected.</description>
+  <license>AGPL-3.0</license>
+  <maintainer>
+    <author>Deepak Srivastava</author>
+    <email>deepak@mountev.co.uk</email>
+  </maintainer>
+  <urls>
+    <url desc="Main Extension Page">https://github.com/mountev/iskconcustom</url>
+    <url desc="Documentation">https://github.com/mountev/iskconcustom</url>
+    <url desc="Support">https://github.com/mountev/iskconcustom</url>
+    <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
+  </urls>
+  <releaseDate>2020-12-25</releaseDate>
+  <version>1.0</version>
+  <develStage>stable</develStage>
+  <compatibility>
+    <ver>5.0</ver>
+  </compatibility>
+  <classloader>
+    <psr4 prefix="Civi\" path="Civi"/>
+  </classloader>
+  <civix>
+    <namespace>CRM/Iskconcustom</namespace>
+  </civix>
+</extension>
