@@ -14,8 +14,13 @@
       var freqUnit = $('#frequency_unit').val();
       if (!freqUnit && !rbtnInterval) {
         $("input[name=is_recur_radio][value=month]").prop('checked', true).trigger('change');
+        Swal.fire({
+          title: 'Information',
+          text: 'GoCardless only works with recurring payment options. Your ONE-TIME donation type has been changed to MONTHLY.',
+          icon: 'info',
+          confirmButtonText: 'OK'
+        });
       }
     }
   }
-
 })(CRM.$, CRM._, CRM.ts('iskconcustom'));
