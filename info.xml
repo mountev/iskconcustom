@@ -2,7 +2,7 @@
 <extension key="iskconcustom" type="module">
   <file>iskconcustom</file>
   <name>Custom Fixes</name>
-  <description>Extension for custom fixes - e.g making recur button change to recurring option after gocardless is selected.</description>
+  <description>Extension for custom fixes - e.g 1. making recur button change to recurring option after gocardless is selected. 2. Adding aggregate amount column and filters to contribution repeat report.</description>
   <license>AGPL-3.0</license>
   <maintainer>
     <author>Deepak Srivastava</author>
