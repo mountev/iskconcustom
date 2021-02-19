@@ -440,11 +440,12 @@ LEFT JOIN $this->tempTableRepeat2 {$this->_aliases['civicrm_contribution']}2
         $amountClauseWithAND[] = str_replace("{$this->_aliases['civicrm_contribution']}.total_amount",
           "{$this->_aliases['civicrm_contribution']}2.total_amount_sum", $clauses['total_amount2']);
       }
-      if (!empty($clauses['total_amount3'])) {
-        $amountClauseWithAND[] = str_replace("{$this->_aliases['civicrm_contribution']}.total_amount",
-          "{$this->_aliases['civicrm_contribution']}3.total_amount_sum", $clauses['total_amount3']);
-      }
       $this->_amountClauseWithAND = !empty($amountClauseWithAND) ? implode(' AND ', $amountClauseWithAND) : NULL;
+      if (!empty($clauses['total_amount3'])) {
+        $amountClauseWithOR = str_replace("{$this->_aliases['civicrm_contribution']}.total_amount",
+          "{$this->_aliases['civicrm_contribution']}3.total_amount_sum", $clauses['total_amount3']);
+        $this->_amountClauseWithAND = !empty($this->_amountClauseWithAND) ? "(({$this->_amountClauseWithAND}) OR {$amountClauseWithOR})" : $amountClauseWithOR;
+      }
     }
 
     if ($replaceAliasWith == 'contribution1') {
