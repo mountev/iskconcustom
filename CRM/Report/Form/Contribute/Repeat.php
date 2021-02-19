@@ -793,14 +793,17 @@ SELECT COUNT({$this->_aliases['civicrm_contribution']}1.total_amount_count )    
        COUNT({$this->_aliases['civicrm_contribution']}2.total_amount_count )       as count2,
        SUM({$this->_aliases['civicrm_contribution']}2.total_amount_sum )           as amount2,
        ROUND(AVG({$this->_aliases['civicrm_contribution']}2.total_amount_sum), 2)  as avg2,
+       SUM({$this->_aliases['civicrm_contribution']}3.total_amount_count )       as count3,
+       SUM({$this->_aliases['civicrm_contribution']}3.total_amount_sum )           as amount3,
+       ROUND(AVG({$this->_aliases['civicrm_contribution']}3.total_amount_sum), 2)  as avg3,
        currency";
     $sql = "{$select} {$this->_from} {$this->_where}
 GROUP BY    currency
 ";
     $dao = $this->executeReportQuery($sql);
 
-    $amount = $average = $amount2 = $average2 = [];
-    $count = $count2 = 0;
+    $amount = $average = $amount2 = $average2 = $amount3 = $average3 = [];
+    $count = $count2 = $count3 = 0;
     while ($dao->fetch()) {
       if ($dao->amount) {
         $amount[]
@@ -817,9 +820,17 @@ GROUP BY    currency
         $average2[] = CRM_Utils_Money::format($dao->avg2, $dao->currency);
       }
       $count2 += $dao->count2;
+
+      if ($dao->amount3) {
+        $amount3[]
+          = CRM_Utils_Money::format($dao->amount3, $dao->currency) . "(" .
+          $dao->count . ")";
+        $average3[] = CRM_Utils_Money::format($dao->avg3, $dao->currency);
+      }
+      $count3 += $dao->count3;
     }
 
-    $statistics['counts']['range_one_title'] = array('title' => ts('Initial Date Range:'));
+    $statistics['counts']['range_one_title'] = array('title' => '1. ' . ts('Initial Date Range:'));
     $statistics['counts']['amount'] = array(
       'value' => implode(',  ', $amount),
       'title' => ts('Total Amount'),
@@ -835,7 +846,7 @@ GROUP BY    currency
       'type' => CRM_Utils_Type::T_STRING,
     );
     $statistics['counts']['range_two_title'] = array(
-      'title' => ts('Second Date Range:'),
+      'title' => '2. ' . ts('Second Date Range:'),
     );
     $statistics['counts']['amount2'] = array(
       'value' => implode(',  ', $amount2),
@@ -848,6 +859,23 @@ GROUP BY    currency
     );
     $statistics['counts']['avg2'] = array(
       'value' => implode(',  ', $average2),
+      'title' => ts('Average'),
+      'type' => CRM_Utils_Type::T_STRING,
+    );
+    $statistics['counts']['aggregate_title'] = array(
+      'title' => '3. ' . ts('Aggregate Range:'),
+    );
+    $statistics['counts']['amount3'] = array(
+      'value' => implode(',  ', $amount3),
+      'title' => ts('Total Amount'),
+      'type' => CRM_Utils_Type::T_STRING,
+    );
+    $statistics['counts']['count3'] = array(
+      'value' => $count3,
+      'title' => ts('Total Donations'),
+    );
+    $statistics['counts']['avg3'] = array(
+      'value' => implode(',  ', $average3),
       'title' => ts('Average'),
       'type' => CRM_Utils_Type::T_STRING,
     );
