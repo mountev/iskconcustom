@@ -189,6 +189,15 @@ class CRM_Report_Form_Contribute_Repeat extends CRM_Report_Form {
             'required' => TRUE,
             'clause' => 'contribution_civireport2.total_amount_count as contribution2_total_amount_count, contribution_civireport2.total_amount_sum as contribution2_total_amount_sum',
           ),
+          'total_amount3' => array(
+            'name' => 'total_amount',
+            'alias' => 'contribution3',
+            'title' => ts('Aggregate Amount'),
+            'type' => CRM_Utils_Type::T_MONEY,
+            'default' => TRUE,
+            'required' => TRUE,
+            'clause' => 'contribution_civireport3.total_amount_count as contribution3_total_amount_count, contribution_civireport3.total_amount_sum as contribution3_total_amount_sum',
+          ),
         ),
         'grouping' => 'contri-fields',
         'filters' => array(
@@ -204,6 +213,12 @@ class CRM_Report_Form_Contribute_Repeat extends CRM_Report_Form {
             'operatorType' => CRM_Report_Form::OP_DATE,
             'name' => 'receive_date',
           ),
+          'receive_date3' => array(
+            'title' => ts('Aggregate Date Range'),
+            'default' => 'this.year',
+            'operatorType' => CRM_Report_Form::OP_DATE,
+            'name' => 'receive_date',
+          ),
           'total_amount1' => array(
             'title' => ts('Range One Amount'),
             'type' => CRM_Utils_Type::T_INT,
@@ -212,6 +227,12 @@ class CRM_Report_Form_Contribute_Repeat extends CRM_Report_Form {
           ),
           'total_amount2' => array(
             'title' => ts('Range Two Amount'),
+            'type' => CRM_Utils_Type::T_INT,
+            'operatorType' => CRM_Report_Form::OP_INT,
+            'name' => 'total_amount',
+          ),
+          'total_amount3' => array(
+            'title' => ts('Aggregate Amount'),
             'type' => CRM_Utils_Type::T_INT,
             'operatorType' => CRM_Report_Form::OP_INT,
             'name' => 'total_amount',
@@ -350,7 +371,9 @@ LEFT JOIN $this->tempTableRepeat1 {$this->_aliases['civicrm_contribution']}1
        ON {$this->groupByTableAlias}.$fromCol = {$this->_aliases['civicrm_contribution']}1
        .{$this->contributionJoinTableColumn}
 LEFT JOIN $this->tempTableRepeat2 {$this->_aliases['civicrm_contribution']}2
-       ON {$this->groupByTableAlias}.$fromCol = {$this->_aliases['civicrm_contribution']}2.{$this->contributionJoinTableColumn}";
+       ON {$this->groupByTableAlias}.$fromCol = {$this->_aliases['civicrm_contribution']}2.{$this->contributionJoinTableColumn}
+    LEFT JOIN $this->tempTableRepeat3 {$this->_aliases['civicrm_contribution']}3
+       ON {$this->groupByTableAlias}.$fromCol = {$this->_aliases['civicrm_contribution']}3.{$this->contributionJoinTableColumn}";
 
     //Join temp table if report is filtered by group. This is specific to 'notin' operator and covered in unit test(ref dev/core#212)
     if (!empty($this->_params['gid_op']) && $this->_params['gid_op'] == 'notin') {
@@ -417,14 +440,38 @@ LEFT JOIN $this->tempTableRepeat2 {$this->_aliases['civicrm_contribution']}2
         $amountClauseWithAND[] = str_replace("{$this->_aliases['civicrm_contribution']}.total_amount",
           "{$this->_aliases['civicrm_contribution']}2.total_amount_sum", $clauses['total_amount2']);
       }
+      if (!empty($clauses['total_amount3'])) {
+        $amountClauseWithAND[] = str_replace("{$this->_aliases['civicrm_contribution']}.total_amount",
+          "{$this->_aliases['civicrm_contribution']}3.total_amount_sum", $clauses['total_amount3']);
+      }
       $this->_amountClauseWithAND = !empty($amountClauseWithAND) ? implode(' AND ', $amountClauseWithAND) : NULL;
     }
 
     if ($replaceAliasWith == 'contribution1') {
-      unset($clauses['receive_date2'], $clauses['total_amount2']);
+      unset(
+        $clauses['receive_date2'],
+        $clauses['receive_date3'],
+        $clauses['total_amount1'],
+        $clauses['total_amount2'],
+        $clauses['total_amount3']
+      );
     }
-    else {
-      unset($clauses['receive_date1'], $clauses['total_amount1']);
+    else if ($replaceAliasWith == 'contribution2') {
+      unset(
+        $clauses['receive_date1'],
+        $clauses['receive_date3'],
+        $clauses['total_amount1'],
+        $clauses['total_amount2'],
+        $clauses['total_amount3']
+      );
+    } else {
+      unset(
+        $clauses['receive_date1'],
+        $clauses['receive_date2'],
+        $clauses['total_amount1'],
+        $clauses['total_amount2'],
+        $clauses['total_amount3']
+      );
     }
 
     $whereClause = !empty($clauses) ? "WHERE " . implode(' AND ', $clauses) : '';
@@ -858,6 +905,11 @@ GROUP BY    currency
           = $row['contribution2_total_amount_sum'] .
           " ({$row['contribution2_total_amount_count']})";
       }
+      if ($row['contribution3_total_amount_count']) {
+        $rows[$uid]['contribution3_total_amount_sum']
+          = $row['contribution3_total_amount_sum'] .
+          " ({$row['contribution3_total_amount_count']})";
+      }
     }
     $this->_columnHeaders['change'] = array(
       'title' => ts('% Change'),
@@ -882,7 +934,8 @@ GROUP BY    currency
     $this->_columnHeaders['contribution1_total_amount_sum']['title'] = "$from1 -<br/> $to1";
     $this->_columnHeaders['contribution2_total_amount_sum']['title'] = "$from2 -<br/> $to2";
     unset($this->_columnHeaders['contribution1_total_amount_count'],
-      $this->_columnHeaders['contribution2_total_amount_count']
+      $this->_columnHeaders['contribution2_total_amount_count'],
+      $this->_columnHeaders['contribution3_total_amount_count']
     );
 
     $this->formatDisplay($rows);
@@ -1039,6 +1092,28 @@ currency varchar(3)
       ALTER TABLE $this->tempTableRepeat2 ADD INDEX ({$this->contributionJoinTableColumn})
     ");
 
+    // 3rd temp table
+    $subWhere = $this->whereContribution('contribution3');
+    $from = $this->fromContribution('contribution3');
+    $subContributionQuery3 = "
+SELECT {$subSelect2} contribution3.{$this->contributionJoinTableColumn},
+       sum( contribution3.total_amount ) AS total_amount_sum,
+       count( * ) AS total_amount_count
+{$from}
+{$subWhere}
+GROUP BY contribution3.{$this->contributionJoinTableColumn}";
+    $this->tempTableRepeat3 = $this->createTemporaryTable('tempTableRepeat3', "
+{$create}
+{$this->contributionJoinTableColumn} int unsigned,
+total_amount_sum decimal(20,2),
+total_amount_count int
+", TRUE, TRUE);
+    $sql = "INSERT INTO $this->tempTableRepeat3 {$subContributionQuery3}";
+    $this->executeReportQuery($sql);
+
+    $this->executeReportQuery("
+      ALTER TABLE $this->tempTableRepeat3 ADD INDEX ({$this->contributionJoinTableColumn})
+    ");
   }
 
 }
