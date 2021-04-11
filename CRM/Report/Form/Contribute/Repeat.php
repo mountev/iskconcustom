@@ -352,6 +352,7 @@ class CRM_Report_Form_Contribute_Repeat extends CRM_Report_Form {
     if ($this->groupByTable == 'civicrm_contact') {
       $from .= "
 LEFT JOIN civicrm_address {$this->_aliases['civicrm_address']} ON {$this->_aliases['civicrm_contact']}.id = {$this->_aliases['civicrm_address']}.contact_id
+      AND {$this->_aliases['civicrm_address']}.is_primary = 1
 LEFT JOIN civicrm_email   {$this->_aliases['civicrm_email']}
        ON {$this->_aliases['civicrm_contact']}.id = {$this->_aliases['civicrm_email']}.contact_id AND {$this->_aliases['civicrm_email']}.is_primary = 1
 LEFT JOIN civicrm_phone   {$this->_aliases['civicrm_phone']}
